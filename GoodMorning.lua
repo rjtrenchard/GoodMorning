@@ -29,6 +29,7 @@ _addon.author = "rjt"
 _addon.version = "1.0"
 _addon.commands = { "morning", "goodmorning" }
 
+require('tables')
 config = require('config')
 defaults = {
     timeout_hr = 6, -- how long before we consider doing timeout actions
@@ -37,17 +38,17 @@ defaults = {
     detect_mouse = false,
     detect_click = true,
     detect_keyboard = true,
-
-    wakeup_actions = T {
-        -- "input /servmes",
-        "input /lsmes",
-        "input /ls2mes"
-    }
 }
 
-settings = config.load(defaults)
+wakeup_actions = T {
+    -- "input /servmes",
+    "input /lsmes",
+    "input /ls2mes"
+}
 
-message_stream = function(s) end
+
+settings = config.load(defaults)
+print_target = function(s) windower.add_to_chat(144, s) end
 
 idle_time = os.time() -- (settings.timeout_hr * 60 * 60)
 
@@ -63,7 +64,7 @@ function check_idle()
 end
 
 function do_wakeup_actions()
-    local actions = settings.wakeup_actions
+    local actions = wakeup_actions
 
     local delay = settings.action_delay
 
@@ -110,32 +111,58 @@ windower.register_event('addon command', function(...)
     local cmd_args = args:slice(2)
 
     local function help_msg()
-
+        print_target()
     end
 
     local function error_msg(s)
-
+        print_target(s)
     end
 
-    if not command then
+    if not command or command == 'help' then
         help_msg()
+
     elseif command == 'set' then
         if cmd_args[1]:lower() == 'timeout' and cmd_args[2] and tonumber(cmd_args[2]) then
             settings.timeout_hr = tonumber(cmd_args[2])
         elseif cmd_args[1]:lower() == 'delay' and cmd_args[2] and tonumber(cmd_args[2]) then
             settings.action_delay = tonumber(cmd_args[2])
         end
-        config.save(settings)
-    elseif command == 'add' or command == 'a' or command == '+' then
-        if cmd_args[1] then settings.wakeup_actions.insert(cmd_args[1]) else error_msg("Invalid command: ") end
-        config.save(settings)
-    elseif command == 'del' or command == 'd' or command == '-' then
+        config.save(settings, windower.ffxi.get_player().name)
 
-        config.save(settings)
+        -- elseif command == 'add' or command == 'a' or command == '+' then
+        --     if cmd_args[1] then
+        --         wakeup_actions[#wakeup_actions + 1] = cmd_args[1]
+        --     else
+        --         error_msg('Error: nothing to add')
+        --     end
+
+        --     -- config.save(settings, windower.ffxi.get_player().name)
+        --     windower.send_command('morning list')
+
+        -- elseif command == 'del' or command == 'd' or command == '-' then
+        --     if cmd_args[1] and tonumber(cmd_args[1]) then
+        --         local index = tonumber(cmd_args[1])
+
+        --         if index == 1 then
+        --             wakeup_actions = wakeup_actions:slice(2)
+        --         elseif index ~= #wakeup_actions then
+        --             wakeup_actions = wakeup_actions:slice(1, index) +
+        --                 wakeup_actions:slice(index + 1)
+        --         else
+        --             wakeup_actions = wakeup_actions:slice(1, index)
+        --         end
+        --     else
+        --         error_msg("Error: nothing to remove")
+        --     end
+        --     -- config.save(settings, windower.ffxi.get_player().name)
+        --     windower.send_command('morning list')
+
     elseif command == 'list' then
-        windower.add_to_chat(144, 'Wakeup actions: ')
-        for k, v in ipairs(settings.wakeup_actions) do
-            windower.add_to_chat(144, '  [' .. k .. '] ' .. v)
+        print_target('Idle timeout: ' .. settings.timeout_hr .. ' hours')
+        print_target('Delay: ' .. settings.action_delay .. ' seconds')
+        print_target('Wakeup actions: ')
+        for k, v in ipairs(wakeup_actions) do
+            print_target('  [' .. k .. '] ' .. v)
         end
     end
 
