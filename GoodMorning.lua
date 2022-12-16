@@ -38,20 +38,32 @@ defaults = {
     detect_mouse = false,
     detect_click = true,
     detect_keyboard = true,
+
+    actions = "input /lsmes,input /ls2mes"
 }
 
-wakeup_actions = T {
-    -- "input /servmes",
-    "input /lsmes",
-    "input /ls2mes"
-}
+
 
 
 settings = config.load(defaults)
 print_target = function(s) windower.add_to_chat(144, s) end
-
 idle_time = os.time() -- (settings.timeout_hr * 60 * 60)
 
+function csv_to_table(s)
+    local t = T {}
+    for v in s:gmatch("[^,]+") do
+        t[#t + 1] = v
+    end
+    return t
+end
+
+function table_to_csv(t)
+    local s = ""
+    for v in pairs(t) do
+        s = s .. t[v] .. ','
+    end
+    return s:sub(1, -2)
+end
 
 function check_idle()
     local time = os.time()
@@ -73,6 +85,8 @@ function do_wakeup_actions()
         windower.send_command(v)
     end
 end
+
+wakeup_actions = csv_to_table(settings.actions)
 
 keyboard_evt = nil
 mouse_evt = nil
@@ -111,7 +125,10 @@ windower.register_event('addon command', function(...)
     local cmd_args = args:slice(2)
 
     local function help_msg()
-        print_target()
+        print_target('Good Morning!')
+        print_target('version ' .. _addon.version)
+        print_target('set [timeout,delay] value -- sets the duration of timeout or action delay.')
+        print_target('list -- lists functionality of the addon')
     end
 
     local function error_msg(s)
@@ -120,6 +137,7 @@ windower.register_event('addon command', function(...)
 
     if not command or command == 'help' then
         help_msg()
+        return
 
     elseif command == 'set' then
         if cmd_args[1]:lower() == 'timeout' and cmd_args[2] and tonumber(cmd_args[2]) then
