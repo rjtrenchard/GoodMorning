@@ -57,6 +57,7 @@ mouse_data = T {
 
 idle_time = os.time()
 
+-- checks idle time, and updates idle timer
 function check_idle()
     local time = os.time()
 
@@ -68,6 +69,7 @@ function check_idle()
     idle_time = time
 end
 
+-- performs all wakeup actions
 function do_wakeup_actions()
     local actions = wakeup_actions
 
@@ -112,7 +114,10 @@ windower.register_event('addon command', function(...)
     local function help_msg()
         print_target('Good Morning!')
         print_target('version ' .. _addon.version)
-        print_target('set [timeout,delay] value -- sets the duration of timeout or action delay.')
+        print_target('set [timeout,delay] [value] -- sets the duration of timeout or action delay.')
+        print_target('toggle [keyboard,click,mouse] -- toggles detection of input')
+        print_target('add ["command"] adds a command to execution list')
+        print_target('del [index] removes a command at index from execution list')
         print_target('list -- lists functionality of the addon')
     end
 
@@ -131,6 +136,21 @@ windower.register_event('addon command', function(...)
             settings.action_delay = tonumber(cmd_args[2])
         end
         config.save(settings)
+
+    elseif command == 'toggle' then
+        if cmd_args[1] then
+            if cmd_args[1]:lower() == 'keyboard' then
+                settings.detect_keyboard = (not settings.detect_keyboard)
+            elseif cmd_args[1]:lower() == 'click' then
+                settings.detect_click = (not settings.detect_click)
+            elseif cmd_args[1]:lower() == 'mouse' then
+                settings.detect_mouse = (not settings.detect_mouse)
+            else
+                error_msg('Error: nothing to toggle')
+                return
+            end
+            config.save(settings)
+        end
 
     elseif command == 'add' or command == 'a' or command == '+' then
         if cmd_args[1] then
@@ -160,6 +180,11 @@ windower.register_event('addon command', function(...)
     elseif command == 'list' then
         print_target('Idle timeout: ' .. settings.timeout_hr .. ' hours')
         print_target('Delay: ' .. settings.action_delay .. ' seconds')
+        local s = ""
+        if settings.detect_keyboard then s = s .. "keyboard " end
+        if settings.detect_click then s = s .. "click " end
+        if settings.detect_mouse then s = s .. "mouse" end
+        print_target('Detecting: ' .. s)
         print_target('Wakeup actions: ')
         for k, v in ipairs(wakeup_actions) do
             print_target('  [' .. k .. '] ' .. v)
@@ -167,6 +192,8 @@ windower.register_event('addon command', function(...)
 
     elseif command == 'test' then
         idle_time = os.time() - (settings.timeout_hr * 60 * 60 + 1)
+    else
+        windower.send_command('morning help')
     end
 
 end)

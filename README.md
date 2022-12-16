@@ -19,6 +19,7 @@ The default state will display ls and ls2 MOTD's.
 | Command | Subcommand | Description |
 | --- | --- | --- |
 | set | [timeout/delay] | The amount of time in hours, or the amount of time between actions firing. |
+| toggle | [keyboard/click/mouse] | toggles whether the addon will detect keyboard, mouseclicks, or mousemove |
 | add, a, + | a windower command to execute | for example, `//morning add "input /servmes"` |
 | del, d, - | an index | Removes the command at that index |
 | test | nil | tests as though you were AFK for timeout+1second |
